@@ -1,41 +1,43 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 class Span extends LeafRenderObjectWidget {
   final String text;
   final TextStyle? style;
+  final int? maxLines;
 
-  const Span(this.text, {this.style});
+  const Span(this.text, {this.style, this.maxLines});
 
   @override
   RenderObject createRenderObject(BuildContext context) {
-    return SpanRender(text, style);
+    return SpanRender(this);
   }
 
   @override
   void updateRenderObject(BuildContext context, SpanRender render) {
-    render.update(text, style);
+    render.update(this);
   }
 }
 
 class SpanRender extends RenderBox {
-  String text;
-  TextStyle? style;
+  Span widget;
   TextPainter painter;
   Size? savedSize;
 
-  SpanRender(this.text, this.style)
+  SpanRender(this.widget)
       : painter = TextPainter(
-          text: TextSpan(style: style, text: text),
+          text: TextSpan(style: widget.style, text: widget.text),
           textDirection: TextDirection.ltr,
         );
 
-  void update(String text, TextStyle? style) {
-    if (text == this.text && style == this.style) return;
+  void update(Span widget) {
+    if (this.widget.text == widget.text && this.widget.style == widget.style) {
+      return;
+    }
 
-    this.text = text;
-    this.style = style;
-    painter.text = TextSpan(text: text, style: style);
-    painter.layout();
+    this.widget = widget;
+    painter.text = TextSpan(
+        text: widget.text, style: widget.style ?? Get.textTheme?.bodyText2);
     if (painter.size != savedSize) {
       markNeedsLayout();
     }
@@ -52,7 +54,8 @@ class SpanRender extends RenderBox {
 
   @override
   void performLayout() {
-    painter.layout();
+    painter.maxLines = widget.maxLines;
+    painter.layout(maxWidth: constraints.maxWidth);
     performResize();
   }
 

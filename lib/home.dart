@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -49,11 +51,16 @@ class Item extends StatelessWidget {
       clipBehavior: Clip.hardEdge,
       child: _Item(index),
     );
+
+    if (GetPlatform.isWeb) return child;
+
     return Obx(() {
-      final scale = index - (state.page.value ?? 0);
-      return Transform.scale(
-        alignment: Alignment.topCenter,
-        scale: 1 - 0.3 * scale.abs(),
+      final scale = 1 - 0.3 * (index - (state.page.value ?? 0)).abs();
+      final matrix = Matrix4.identity();
+      matrix.translate((1 - scale) * Get.width / 2);
+      matrix.multiply(Matrix4.diagonal3Values(scale, scale, 1));
+      return ImageFiltered(
+        imageFilter: ImageFilter.matrix(matrix.storage),
         child: child,
       );
     });
@@ -93,7 +100,10 @@ class _Item extends StatelessWidget {
                 ),
               ),
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-              child: const Text('事件追踪'),
+              child: const Text(
+                '事件追踪',
+                style: TextStyle(color: Colors.black87, fontSize: 14),
+              ),
             ),
             const SizedBox(height: 8),
             const Text(
@@ -151,6 +161,7 @@ class _Item extends StatelessWidget {
             const Text(
               // ignore: lines_longer_than_80_chars
               '流式布局，这是一种当前无论是前端，还是 Native 都比较流行的一种页面布局。特别是对于商品这样的 Feeds 流，无论是淘宝，京东，美团，还是闲鱼。都基本上以多列瀑布流进行呈现，容器列数固定，然后每个卡片高度不一，形成参差不齐的多栏布局。',
+              style: TextStyle(fontSize: 14, color: Colors.black87),
               maxLines: 3,
             ),
           ]),
@@ -178,6 +189,8 @@ class _Item extends StatelessWidget {
       ),
       Obx(() {
         final scale = index - (state.page.value ?? 0);
+        if (scale == 0) return const SizedBox();
+
         return Container(color: Colors.white.withOpacity(0.5 * scale.abs()));
       }),
     ]);
